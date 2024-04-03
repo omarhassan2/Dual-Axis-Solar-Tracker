@@ -1,6 +1,6 @@
 # Dual-Axis-Solar-Tracker
 
-![Solar Tracker Demo](https://drive.google.com/file/d/1pkLv8sapBYdQjR_nTqmGBsWqE1lD7MPm/view?usp=sharing)
+![Solar Tracker Demo](/DUA_AXIS.jpeg)
 
 ## Overview
 
@@ -8,9 +8,9 @@ This repository contains the code and documentation for a Dual-Axis Solar Tracke
 
 ## Features
 
-- Dual-axis tracking: The solar tracker adjusts both azimuth and elevation angles to precisely follow the sun's path.
-- PID Control: Utilizes the PID control algorithm to continuously adjust the position of solar panels for optimal solar exposure.
-- User-friendly interface: Includes intuitive controls and monitoring tools for easy interaction and performance analysis.
+- **Dual-axis tracking:** The solar tracker adjusts both azimuth and elevation angles to precisely follow the sun's path.
+- **PID Control:** Utilizes the PID control algorithm to continuously adjust the position of solar panels for optimal solar exposure.
+- **User-friendly interface:** Includes intuitive controls and monitoring tools for easy interaction and performance analysis.
 
 ## Schematic
 
