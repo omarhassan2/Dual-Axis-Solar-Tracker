@@ -1,6 +1,6 @@
 # Dual-Axis-Solar-Tracker
 
-![Solar Tracker Demo](https://drive.google.com/file/d/1pkLv8sapBYdQjR_nTqmGBsWqE1lD7MPm/view?usp=sharing)
+![Solar Tracker Demo](/DUA_AXIS.jpeg)
 
 ## Overview
 
