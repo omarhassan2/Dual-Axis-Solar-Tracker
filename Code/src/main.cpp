@@ -4,7 +4,6 @@
  *          throughout the day, maximizing energy generation.
  * 
  * @author  DUA AXIS ☀️↗️⚡
- * 
  * @date    Apirl 4, 2024 
 */
 
@@ -12,23 +11,39 @@
 
 /*************** Includes Section ***************/
 #include <Arduino.h>
-#include <Servo.h>
+#include <ESP32Servo.h>
 /************************************************/
 
 
 
 /*************** Macro Defentions Section ***************/
+/* Time Period of each Cycle in milliseconds, 
+the more lower the more high detection */
+#define TIME_PERIOD             (10)
+
+
+/* If the angle = 90(Tolerance) this mean the light is perpendicular to the cell,
+if not we have to change the direction to to perpendicular again*/
+#define TOLERANCE               (90)
+
+
+/* System constraints  */
+#define MAX_HORIZONTAL_ANGLE    (175)
+#define MIN_HORIZONTAL_ANGLE    (5)
+#define MAX_VERTICAL_ANGLE      (60)
+#define MIN_VERTICAL_ANGLE      (1)
+
+
+/************ Interfacing ************/
 /* 4 LDRs Sensors */
-#define LDR_TOP_RIGHT           (A0)
-#define LDR_TOP_LEFT            (A1)
-#define LDR_BOTTOM_RIGHT        (A2)
-#define LDR_BOTTOM_LEFT         (A3)
+#define LDR_TOP_RIGHT           (36)
+#define LDR_TOP_LEFT            (39)
+#define LDR_DOWN_RIGHT          (34)
+#define LDR_DOWN_LEFT           (35)
 
 /* 2 Servo Motors */
-#define MOTOR_TOP_BOTTOM        (2)
-#define MOTOR_RIGHT_LEFT        (3)
-
-
+#define SERVO_HORIZONTAL        (32)
+#define SERVO_VERTICAL          (33)
 /********************************************************/
 
 
@@ -40,34 +55,24 @@
 
 
 /*************** Global Decleration Section ***************/
-Servo horizontal; // horizontal servo
-int servoh = 180; 
-int servohLimitHigh = 175;
-int servohLimitLow = 5;
-// 65 degrees MAX
+Servo Servo_Horizontal; 
+int HorizontalAngle = 180; 
 
-Servo vertical; // vertical servo
-int servov = 45; 
-int servovLimitHigh = 60;
-int servovLimitLow = 1;
 
-// LDR pin connections
-// name = analogpin;
-int ldrlt = A0; //LDR top left - BOTTOM LEFT <--- BDG
-int ldrrt = A3; //LDR top rigt - BOTTOM RIGHT
-int ldrld = A1; //LDR down left - TOP LEFT
-int ldrrd = A3; //ldr down rigt - TOP RIGHT
+Servo Servo_Vertical;
+int VerticalAngle = 45; 
 /**********************************************************/
 
 
 
 /*************** Setup Application Section ***************/
 void setup() {
-horizontal.attach(2);
-vertical.attach(3);
-horizontal.write(180);
-vertical.write(45);
-delay(2500); 
+    Servo_Horizontal.attach(SERVO_HORIZONTAL);
+    Servo_Vertical.attach(SERVO_VERTICAL);
+
+    Servo_Horizontal.write(180);
+    Servo_Vertical.write(45);
+    delay(2500); 
 }
 /*********************************************************/
 
@@ -75,60 +80,84 @@ delay(2500);
 
 /*************** Start Application Section ***************/
 void loop() {
-int lt = analogRead(ldrlt); // top left
-int rt = analogRead(ldrrt); // top right
-int ld = analogRead(ldrld); // down left
-int rd = analogRead(ldrrd); // down right
-int dtime = 10; int tol = 90; // dtime=diffirence time, tol=toleransi
-int avt = (lt + rt) / 2; // average value top
-int avd = (ld + rd) / 2; // average value down
-int avl = (lt + ld) / 2; // average value left
-int avr = (rt + rd) / 2; // average value right
-int dvert = avt - avd; // check the diffirence of up and down
-int dhoriz = avl - avr;// check the diffirence og left and rigt
+    int topRight    = analogRead(LDR_TOP_RIGHT);
+    int topLeft     = analogRead(LDR_TOP_LEFT); 
+    int downRight   = analogRead(LDR_DOWN_RIGHT); 
+    int downLeft    = analogRead(LDR_DOWN_LEFT);
 
-if (-1*tol > dvert || dvert > tol) 
- {
- if (avt > avd)
- {
- servov = ++servov;
- if (servov > servovLimitHigh)
- {servov = servovLimitHigh;}
- }
- else if (avt < avd)
- {servov= --servov;
- if (servov < servovLimitLow)
- { servov = servovLimitLow;}
- }
- vertical.write(servov);
- }
-if (-1*tol > dhoriz || dhoriz > tol) // check if the diffirence is in the tolerance else change horizontal angle
- {
- if (avl > avr)
- {
- servoh = --servoh;
- if (servoh < servohLimitLow)
- {
- servoh = servohLimitLow;
- }
- }
- else if (avl < avr)
- {
- servoh = ++servoh;
- if (servoh > servohLimitHigh)
- {
- servoh = servohLimitHigh;
- }
- }
- else if (avl = avr)
- {
- delay(5000);
- }
- horizontal.write(servoh);
- }
- 
- delay(dtime);
-   
+
+    /* Get the average value for all directions */
+    int averageTop      = (topLeft + topRight)   / 2; 
+    int averageDown     = (downLeft + downRight) / 2; 
+    int averageLeft     = (topLeft + downLeft)   / 2; 
+    int averageRight    = (topRight + downRight) / 2; 
+
+
+    int diffirenceVertical   = averageTop  - averageDown; 
+    int diffirenceHorizontal = averageLeft - averageRight;
+
+
+    // check if the diffirence is in the tolerance else change Vertical angle
+    if ((-1*TOLERANCE > diffirenceVertical) || (diffirenceVertical > TOLERANCE)) 
+    {
+        /* If the light at top part */
+        if (averageTop >= averageDown)
+        {   /* Move Vertical Servo one degree(upward) until reach it's limit
+            if it's angle more than limit stop at limit */
+            
+            VerticalAngle = ++VerticalAngle;
+            if (VerticalAngle > MAX_VERTICAL_ANGLE)
+            {
+                VerticalAngle = MAX_VERTICAL_ANGLE;
+            }
+        }
+
+        /* If the light at down part */
+        else if (averageTop < averageDown)
+        {   /* Move Vertical Servo one degree(downward) until reach it's limit
+            if it's angle more than limit stop at limit */
+
+            VerticalAngle = --VerticalAngle;
+            if (VerticalAngle < MIN_VERTICAL_ANGLE)
+            { 
+                VerticalAngle = MIN_VERTICAL_ANGLE;
+            }
+        }
+
+        Servo_Vertical.write(VerticalAngle);
+    }
+
+    // check if the diffirence is in the tolerance else change horizontal angle
+    if ((-1*TOLERANCE > diffirenceHorizontal) || (diffirenceHorizontal > TOLERANCE)) 
+    {
+        /* If the light at right part */
+        if (averageLeft >= averageRight)
+        {   /* Move Horizontal Servo one degree(rightward) until reach it's limit
+            if it's angle more than limit stop at limit */
+
+            HorizontalAngle = --HorizontalAngle;
+            if (HorizontalAngle < MIN_HORIZONTAL_ANGLE)
+            {
+                HorizontalAngle = MIN_HORIZONTAL_ANGLE;
+            }
+        }
+
+        /* If the light at left part */
+        else if (averageLeft < averageRight)
+        {   /* Move Horizontal Servo one degree(leftward) until reach it's limit
+            if it's angle more than limit stop at limit */
+            
+            HorizontalAngle = ++HorizontalAngle;
+            if (HorizontalAngle > MAX_HORIZONTAL_ANGLE)
+            {
+                HorizontalAngle = MAX_HORIZONTAL_ANGLE;
+            }
+        }
+
+        Servo_Horizontal.write(HorizontalAngle);
+    }
+
+    delay(TIME_PERIOD);
 }
 /*********************************************************/
 
