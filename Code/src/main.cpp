@@ -18,7 +18,7 @@
 
 /*************** Macro Defentions Section ***************/
 /* Time Period of each Cycle in milliseconds, 
-the more lower the more high detection */
+the lower time the more responding */
 #define TIME_PERIOD             (10)
 
 
@@ -146,7 +146,7 @@ void loop() {
         else if (averageLeft < averageRight)
         {   /* Move Horizontal Servo one degree(leftward) until reach it's limit
             if it's angle more than limit stop at limit */
-            
+
             HorizontalAngle = ++HorizontalAngle;
             if (HorizontalAngle > MAX_HORIZONTAL_ANGLE)
             {
