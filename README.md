@@ -1,6 +1,6 @@
 # Dual-Axis-Solar-Tracker
 
-![Solar Tracker Demo](/DUA_AXIS.jpeg)
+![Solar Tracker Demo](/DUA_AXIS.jpg)
 
 ## Overview
 
