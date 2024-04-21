@@ -22,23 +22,27 @@
 /*************** Macro Defentions Section ***************/
 
 /************ System constraints  ************/
-#define MAX_HORIZONTAL_ANGLE    (175)
-#define MIN_HORIZONTAL_ANGLE    (5)
-#define MAX_VERTICAL_ANGLE      (60)
-#define MIN_VERTICAL_ANGLE      (1)
+#define MAX_HORIZONTAL_ANGLE        (175)
+#define MIN_HORIZONTAL_ANGLE        (5)
+#define MAX_VERTICAL_ANGLE          (60)
+#define MIN_VERTICAL_ANGLE          (1)
+
+/* Initial Servo angle */
+#define INITIAL_HORIZONTAL_ANGLE    (45)
+#define INITIAL_VERTICAL_ANGLE      (45)
 
 /* Time Period of each Cycle in milliseconds, 
 the lower time the more responding */
-#define TIME_PERIOD             (10)
+#define TIME_PERIOD                 (10)
 
 /* If the angle = 90(Tolerance) this mean the light is perpendicular to the cell,
 if not we have to change the direction to to perpendicular again*/
-#define TOLERANCE               (90)
+#define TOLERANCE                   (90)
 
 /************ Network & Firebase Section ************/
 // Insert your network credentials(ssid : Name)
-#define WIFI_SSID       "asus"
-#define WIFI_PASSWORD   "Abo Bakr 2468"
+#define WIFI_SSID       "ON4"
+#define WIFI_PASSWORD   "ONspace25#"
 
 // Insert Firebase project API Key
 #define API_KEY       "AIzaSyBuqRJ65YOWkPKruUfNekaekYqsH174HNw"
@@ -77,8 +81,8 @@ void stopMode(void);
 // Define Motors and their angle
 Servo Servo_Horizontal; 
 Servo Servo_Vertical;
-int HorizontalAngle = 180; 
-int VerticalAngle = 45; 
+int HorizontalAngle = INITIAL_HORIZONTAL_ANGLE; 
+int VerticalAngle = INITIAL_VERTICAL_ANGLE; 
 
 //Define Firebase Data object
 FirebaseData firebaseData;
@@ -102,8 +106,8 @@ void setup() {
     /********** Setup Servo Motors with initial angle **********/
     Servo_Horizontal.attach(SERVO_HORIZONTAL);
     Servo_Vertical.attach(SERVO_VERTICAL);
-    Servo_Horizontal.write(180);
-    Servo_Vertical.write(45);
+    Servo_Horizontal.write(INITIAL_HORIZONTAL_ANGLE);
+    Servo_Vertical.write(INITIAL_VERTICAL_ANGLE);
 
     /********** Connecting to Wi-Fi **********/
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -283,8 +287,8 @@ void automaticMode(void){
 
 void stopMode(void){
     /* Set Motors to the initial values */
-    Servo_Horizontal.write(180);
-    Servo_Vertical.write(45);
+    Servo_Horizontal.write(INITIAL_HORIZONTAL_ANGLE);
+    Servo_Vertical.write(INITIAL_VERTICAL_ANGLE);
 
     /* Turn On Indication LED and Turn off others*/
     digitalWrite(MANUAL_MODE_LED, LOW);
