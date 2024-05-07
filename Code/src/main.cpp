@@ -8,10 +8,10 @@
 */
 
 
-
 /*************** Includes Section ***************/
 #include <Arduino.h>
 #include <ESP32Servo.h>
+#include "ArduPID.h" // PID Controller
 #include <WiFi.h>
 #include <Firebase_ESP_Client.h>
 #include "addons/TokenHelper.h" //Provide the token generation process info.
@@ -21,28 +21,10 @@
 
 /*************** Macro Defentions Section ***************/
 
-/************ System constraints  ************/
-#define MAX_HORIZONTAL_ANGLE        (175)
-#define MIN_HORIZONTAL_ANGLE        (5)
-#define MAX_VERTICAL_ANGLE          (60)
-#define MIN_VERTICAL_ANGLE          (1)
-
-/* Initial Servo angle */
-#define INITIAL_HORIZONTAL_ANGLE    (45)
-#define INITIAL_VERTICAL_ANGLE      (45)
-
-/* Time Period of each Cycle in milliseconds, 
-the lower time the more responding */
-#define TIME_PERIOD                 (10)
-
-/* If the angle = 90(Tolerance) this mean the light is perpendicular to the cell,
-if not we have to change the direction to to perpendicular again*/
-#define TOLERANCE                   (90)
-
 /************ Network & Firebase Section ************/
 // Insert your network credentials(ssid : Name)
-#define WIFI_SSID       "ON4"
-#define WIFI_PASSWORD   "ONspace25#"
+#define WIFI_SSID       "Omar Hassan"
+#define WIFI_PASSWORD   "0123456789_omar"  
 
 // Insert Firebase project API Key
 #define API_KEY       "AIzaSyBuqRJ65YOWkPKruUfNekaekYqsH174HNw"
@@ -51,20 +33,28 @@ if not we have to change the direction to to perpendicular again*/
 #define DATABASE_URL  "https://learn-iot-esp32-default-rtdb.firebaseio.com/" 
 
 /************ Interfacing Section ************/
+/* System Constraints */
+#define INITIAL_HORIZONTAL_ANGLE    (90)
+#define INITIAL_VERTICAL_ANGLE      (90)
+#define PID_OUTPUT_LIMITS           (5)
+#define PID_KP                      (0.01)
+#define PID_KI                      (0)
+#define PID_KD                      (0)
+
 /* 4 LDRs Sensors */
-#define LDR_TOP_RIGHT           (4)
-#define LDR_TOP_LEFT            (0)
-#define LDR_DOWN_RIGHT          (2)
-#define LDR_DOWN_LEFT           (15)
+#define LDR_TOP             (36)
+#define LDR_LEFT            (39)
+#define LDR_BOTTOM          (34)
+#define LDR_RIGHT           (35)
+
 
 /* 2 Servo Motors */
-#define SERVO_HORIZONTAL        (32)
-#define SERVO_VERTICAL          (33)
+#define SERVO_HORIZONTAL        (19)
+#define SERVO_VERTICAL          (18)
 
-/* Indication LEDS */
-#define MANUAL_MODE_LED         (23)
-#define AUTOMATIC_MODE_LED      (22)
-#define STOP_MODE_LED           (1)
+/* Voltage and Current of the cell  */
+#define CELL_VOLTAGE            (32)
+#define CELL_CURRENT            (33)
 /********************************************************/
 
 
@@ -72,15 +62,14 @@ if not we have to change the direction to to perpendicular again*/
 /*************** Function Decleration Section ***************/
 void manualMode(void); // using IOT : Flutter & Firebase
 void automaticMode(void); // using LDRs
-void stopMode(void);
 /************************************************************/
 
 
 
 /*************** Global Decleration Section ***************/
 // Define Motors and their angle
-Servo Servo_Horizontal; 
-Servo Servo_Vertical;
+Servo ServoHorizontal; 
+Servo ServoVertical;
 int HorizontalAngle = INITIAL_HORIZONTAL_ANGLE; 
 int VerticalAngle = INITIAL_VERTICAL_ANGLE; 
 
@@ -89,6 +78,20 @@ FirebaseData firebaseData;
 FirebaseAuth auth;
 FirebaseConfig config;
 bool signupOK = false;
+unsigned long sendDataPrevMillis = 0;
+
+// PID constants
+double InputVertical, InputHorizontal;
+double SetPoint;
+double VerticalOutput, HorizontalOutput;
+
+// PID Controllers
+ArduPID VerticalPID;
+ArduPID HorizontalPID;
+
+// Cell Volatge and Current
+double CellVoltage = 0;
+double CellCurrent = 0;
 /**********************************************************/
 
 
@@ -98,49 +101,54 @@ void setup() {
     /********** Setup Serial **********/
     Serial.begin(115200);
 
-    /********** Indication LEDS **********/
-    pinMode(MANUAL_MODE_LED, OUTPUT);
-    pinMode(AUTOMATIC_MODE_LED, OUTPUT);
-    pinMode(STOP_MODE_LED, OUTPUT);
-
-    /********** Setup Servo Motors with initial angle **********/
-    Servo_Horizontal.attach(SERVO_HORIZONTAL);
-    Servo_Vertical.attach(SERVO_VERTICAL);
-    Servo_Horizontal.write(INITIAL_HORIZONTAL_ANGLE);
-    Servo_Vertical.write(INITIAL_VERTICAL_ANGLE);
-
     /********** Connecting to Wi-Fi **********/
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    Serial.print("Connecting to Wi-Fi");
-    while (WiFi.status() != WL_CONNECTED){
-        Serial.print(".");
-        delay(300);
-    }
-    Serial.println();
-    Serial.print("Connected with IP: ");
-    Serial.println(WiFi.localIP());
-    Serial.println();
+    // WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    // Serial.print("Connecting to Wi-Fi");
+    // while (WiFi.status() != WL_CONNECTED){
+    //     Serial.print(".");
+    //     delay(300);
+    // }
+    // Serial.println();
+    // Serial.print("Connected with IP: ");
+    // Serial.println(WiFi.localIP());
+    // Serial.println();
 
     /********** Connecting to Firebase **********/
-    //Assign the api key (required)
-    config.api_key = API_KEY;
-    // Assign the RTDB URL (required)
-    config.database_url = DATABASE_URL;
+    // Assign the api key (required)
+    // config.api_key = API_KEY;
+    // // Assign the RTDB URL (required)
+    // config.database_url = DATABASE_URL;
 
-    // Signup for an anonymous user 
-    if (Firebase.signUp(&config, &auth, "", "")){
-        Serial.println("Signup To Firebase ");
-        signupOK = true;
-    }
-    else{
-        Serial.printf("%s\n", config.signer.signupError.message.c_str());
-    }
+    // // Signup for an anonymous user 
+    // if (Firebase.signUp(&config, &auth, "", "")){
+    //     Serial.println("Signup To Firebase ");
+    //     signupOK = true;
+    // }
+    // else{
+    //     Serial.printf("%s\n", config.signer.signupError.message.c_str());
+    // }
 
-    // Assign the callback function for the long running token generation task 
-    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+    // // Assign the callback function for the long running token generation task 
+    // config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
     
-    Firebase.begin(&config, &auth);
-    Firebase.reconnectWiFi(true);
+    // Firebase.begin(&config, &auth);
+    // Firebase.reconnectWiFi(true);
+
+    /********** Setup Servo Motors **********/
+    ServoHorizontal.attach(SERVO_HORIZONTAL);
+    ServoVertical.attach(SERVO_VERTICAL);
+
+    ServoHorizontal.write(INITIAL_HORIZONTAL_ANGLE);
+    ServoVertical.write(INITIAL_VERTICAL_ANGLE);
+    
+
+    /* Initializing The PID Controllers and Constants */
+    
+    VerticalPID.begin(&InputVertical, &VerticalOutput, &SetPoint, PID_KP, PID_KI, PID_KD);
+    VerticalPID.setOutputLimits(-PID_OUTPUT_LIMITS, PID_OUTPUT_LIMITS);
+
+    HorizontalPID.begin(&InputHorizontal, &HorizontalOutput, &SetPoint, PID_KP, PID_KI, PID_KD);
+    HorizontalPID.setOutputLimits(-PID_OUTPUT_LIMITS, PID_OUTPUT_LIMITS);
 }
 /*********************************************************/
 
@@ -148,25 +156,36 @@ void setup() {
 
 /*************** Start Application Section ***************/
 void loop() {
-    if ((Firebase.ready()) && (signupOK)) 
-    {
-        if (Firebase.RTDB.getInt(&firebaseData, "ESP/Mode")) 
-        {
-            if (firebaseData.intData() == 1) 
-            {
-                manualMode();
-            }
-            else if (firebaseData.intData() == 2) 
-            {
-                automaticMode();
-            }
-            else 
-            {
-                stopMode();
-            }
-        }
-    }
-    delay(TIME_PERIOD);
+    automaticMode();
+    // if ((Firebase.ready()) && (signupOK) && ((millis() - sendDataPrevMillis > 1500) || (sendDataPrevMillis == 0))) 
+    // {
+    //     sendDataPrevMillis = millis();
+        
+    //     if (Firebase.RTDB.getBool(&firebaseData, "/ESP/Mode")) 
+    //     {
+    //         if (firebaseData.boolData() == false) 
+    //         {
+    //             Serial.println("Mode : Manual mode");
+    //             manualMode();
+    //         }
+    //         else 
+    //         {
+    //             Serial.println("Mode : Automatic mode");
+    //             automaticMode();
+    //         }
+    //     }
+
+    //     if (Firebase.RTDB.setInt(&firebaseData, "/ESP/CellVoltage", CellVoltage)) 
+    //     {
+    //     }else {Serial.println(firebaseData.errorReason());}
+
+    //     if (Firebase.RTDB.setInt(&firebaseData, "/ESP/CellCurrent", CellCurrent)) 
+    //     {
+    //     }else {Serial.println(firebaseData.errorReason());}
+    // }
+    // // Power of Cell = 1.5 W (V * I)
+    // CellVoltage = random(100, 481) / (100.0);
+    // CellCurrent = (random(10, 15) / 10.0) / (CellVoltage);
 }
 /*********************************************************/
 
@@ -174,125 +193,51 @@ void loop() {
 
 /*************** Function Defintions Section ***************/
 void manualMode(void){
-    /* Turn On Indication LED and Turn off others*/
-    digitalWrite(MANUAL_MODE_LED, HIGH);
-    digitalWrite(AUTOMATIC_MODE_LED, LOW);
-    digitalWrite(STOP_MODE_LED, LOW);
+        if (Firebase.RTDB.getInt(&firebaseData, "/ESP/HorizontalAngle")) {
+            if (firebaseData.dataType() == "int") {
+                HorizontalAngle = firebaseData.intData();
+                Serial.print("HorizontalAngle = ");
+                Serial.println(HorizontalAngle);
+                ServoHorizontal.write(HorizontalAngle);
+            }   
+        }
+        else {
+            Serial.println(firebaseData.errorReason());
+        }
 
-    if (Firebase.RTDB.getInt(&firebaseData, "ESP/HorizontalAngle")) {
-        HorizontalAngle = firebaseData.intData();
-        Serial.print("HorizontalAngle = ");
-        Serial.println(HorizontalAngle);
-        Servo_Horizontal.write(HorizontalAngle);
-    }
-    else {
-        Serial.println(firebaseData.errorReason());
-    }
-
-    delay(100);
-
-    if (Firebase.RTDB.getInt(&firebaseData, "ESP/VerticalAngle")) {
-        VerticalAngle = firebaseData.intData();
-        Serial.print("VerticalAngle = ");
-        Serial.println(VerticalAngle);
-        Servo_Vertical.write(VerticalAngle);
-    }
-    else {
-        Serial.println(firebaseData.errorReason());
-    }
+        if (Firebase.RTDB.getInt(&firebaseData, "/ESP/VerticalAngle")) {
+            if (firebaseData.dataType() == "int") {
+                VerticalAngle = firebaseData.intData();
+                Serial.print("VerticalAngle = ");
+                Serial.println(VerticalAngle);
+                ServoVertical.write(VerticalAngle);
+            }
+        }
+        else {
+            Serial.println(firebaseData.errorReason());
+        }
 }
 
 
 void automaticMode(void){
-    /* Turn On Indication LED and Turn off others*/
-    digitalWrite(MANUAL_MODE_LED, LOW);
-    digitalWrite(AUTOMATIC_MODE_LED, HIGH);
-    digitalWrite(STOP_MODE_LED, LOW);
+    // Reading LDRs
+    int top     = analogRead(LDR_TOP);
+    int bottom  = analogRead(LDR_BOTTOM);
+    int right   = analogRead(LDR_RIGHT); 
+    int left    = analogRead(LDR_LEFT);
 
-    int topRight    = analogRead(LDR_TOP_RIGHT);
-    int topLeft     = analogRead(LDR_TOP_LEFT); 
-    int downRight   = analogRead(LDR_DOWN_RIGHT); 
-    int downLeft    = analogRead(LDR_DOWN_LEFT);
+    // Calculate the output of Vertical Servo 
+    SetPoint = 0;
 
-    /* Get the average value for all directions */
-    int averageTop      = (topLeft  + topRight)   / 2; 
-    int averageDown     = (downLeft + downRight)  / 2; 
-    int averageLeft     = (topLeft  + downLeft)   / 2; 
-    int averageRight    = (topRight + downRight)  / 2; 
+    InputVertical = bottom - top;
+    VerticalPID.compute();
+    ServoVertical.write(ServoVertical.read() + VerticalOutput);
 
-    int diffirenceVertical   = averageTop  - averageDown; 
-    int diffirenceHorizontal = averageLeft - averageRight;
+    /* Calculate the output of Horizontal Servo */ 
+    InputHorizontal = left - right;
+    HorizontalPID.compute();
+    ServoHorizontal.write(ServoHorizontal.read()+ HorizontalOutput);
 
-    // check if the diffirence is in the tolerance else change Vertical angle
-    if ((-1*TOLERANCE > diffirenceVertical) || (diffirenceVertical > TOLERANCE)) 
-    {
-        /* If the light at top part */
-        if (averageTop >= averageDown)
-        {   /* Move Vertical Servo one degree(upward) until reach it's limit
-            if it's angle more than limit stop at limit */
-            
-            VerticalAngle = ++VerticalAngle;
-            if (VerticalAngle > MAX_VERTICAL_ANGLE)
-            {
-                VerticalAngle = MAX_VERTICAL_ANGLE;
-            }
-        }
-
-        /* If the light at down part */
-        else if (averageTop < averageDown)
-        {   /* Move Vertical Servo one degree(downward) until reach it's limit
-            if it's angle more than limit stop at limit */
-
-            VerticalAngle = --VerticalAngle;
-            if (VerticalAngle < MIN_VERTICAL_ANGLE)
-            { 
-                VerticalAngle = MIN_VERTICAL_ANGLE;
-            }
-        }
-
-        Servo_Vertical.write(VerticalAngle);
-    }
-
-    // check if the diffirence is in the tolerance else change horizontal angle
-    if ((-1*TOLERANCE > diffirenceHorizontal) || (diffirenceHorizontal > TOLERANCE)) 
-    {
-        /* If the light at right part */
-        if (averageLeft >= averageRight)
-        {   /* Move Horizontal Servo one degree(rightward) until reach it's limit
-            if it's angle more than limit stop at limit */
-
-            HorizontalAngle = --HorizontalAngle;
-            if (HorizontalAngle < MIN_HORIZONTAL_ANGLE)
-            {
-                HorizontalAngle = MIN_HORIZONTAL_ANGLE;
-            }
-        }
-
-        /* If the light at left part */
-        else if (averageLeft < averageRight)
-        {   /* Move Horizontal Servo one degree(leftward) until reach it's limit
-            if it's angle more than limit stop at limit */
-
-            HorizontalAngle = ++HorizontalAngle;
-            if (HorizontalAngle > MAX_HORIZONTAL_ANGLE)
-            {
-                HorizontalAngle = MAX_HORIZONTAL_ANGLE;
-            }
-        }
-
-        Servo_Horizontal.write(HorizontalAngle);
-    }
-}
-
-
-void stopMode(void){
-    /* Set Motors to the initial values */
-    Servo_Horizontal.write(INITIAL_HORIZONTAL_ANGLE);
-    Servo_Vertical.write(INITIAL_VERTICAL_ANGLE);
-
-    /* Turn On Indication LED and Turn off others*/
-    digitalWrite(MANUAL_MODE_LED, LOW);
-    digitalWrite(AUTOMATIC_MODE_LED, LOW);
-    digitalWrite(STOP_MODE_LED, HIGH);    
+    delay(50);
 }
 /***********************************************************/
