@@ -11,7 +11,3 @@ This repository contains the code and documentation for a Dual-Axis Solar Tracke
 - **Dual-axis tracking:** The solar tracker adjusts both azimuth and elevation angles to precisely follow the sun's path.
 - **PID Control:** Utilizes the PID control algorithm to continuously adjust the position of solar panels for optimal solar exposure.
 - **User-friendly interface:** Includes intuitive controls and monitoring tools for easy interaction and performance analysis.
-
-## Schematic
-
-![Schematic](/Schematic/Schematic.png)
