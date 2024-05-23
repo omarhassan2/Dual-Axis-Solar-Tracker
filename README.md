@@ -1,4 +1,4 @@
-# 🚀 Welcome to Our Dual-Axis Solar Tracker Repository! 🚀
+# 🚀 Welcome to Our Dual-Axis Solar Tracker Repository 🚀
 
 This repository contains the code and documentation for a Dual-Axis Solar Tracker implemented using the PID (Proportional-Integral-Derivative) controller concept. The project aims to efficiently orient solar panels towards the sun throughout the day, maximizing energy generation.
 
@@ -36,7 +36,7 @@ The PID Controller is a crucial part of our solar tracker system. It ensures pre
 
 Our project includes an IOT system that utilizes Firebase for real-time data storage and a Flutter app for monitoring and control.
 
-- Download Flutter App -> ''
+- Download Flutter App -> 'https://drive.google.com/file/d/1UhSQkoldwgrA8FfKU0UBUzVCbPq2rS_C/view?usp=sharing'
 ![Flutter App](\Flutter_App.jpg)
 
 ## Visualization Data
