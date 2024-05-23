@@ -22,14 +22,14 @@ This repository contains the code and documentation for a Dual-Axis Solar Tracke
 
 The circuit diagram for the Dual-Axis Solar Tracker can be found in the `Schematic` directory. This diagram provides a detailed layout of the electrical connections required to build the solar tracker system.
 
-![Circuit Diagram](\Schematic\Schematic.png)
+![Circuit Diagram](/Schematic/Schematic.png)
 
 ## PID Controller
 
 The PID Controller is a crucial part of our solar tracker system. It ensures precise control over the movement of the solar panels. The Simulink module used to obtain the PID constants (Kp, Ki, Kd).
 
 - Simulink Model: 
-![Simulink Model](\Simulink%20Model\Simulink_Model.png)
+![Simulink Model](/Simulink%20Model/Simulink_Model.png)
 
 
 ## IOT Systems
@@ -37,17 +37,18 @@ The PID Controller is a crucial part of our solar tracker system. It ensures pre
 Our project includes an IOT system that utilizes Firebase for real-time data storage and a Flutter app for monitoring and control.
 
 - Download Flutter App -> 'https://drive.google.com/file/d/1UhSQkoldwgrA8FfKU0UBUzVCbPq2rS_C/view?usp=sharing'
-![Flutter App](\Flutter_App.jpg)
+  
+![Flutter App](/Flutter_App.jpg)
 
 ## Visualization Data
 
 After the system work we take the data from Google-Sheet and graph the total power generation along the day. By using Python Script to plot it.
 
 - Google Sheet:
-![Google Sheet](\Scripting\Data.png)
+![Google Sheet](/Scripting/Data.png)
 
 - Output Script:
-![Output Script](\Scripting\Output_Script.png)
+![Output Script](/Scripting/Output_Script.png)
 
 ## Getting Started
 
