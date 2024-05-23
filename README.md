@@ -1,4 +1,4 @@
-# 🚀 Welcome to Our Dual-Axis Solar Tracker Repository 🚀
+# 🚀Welcome to Our Dual-Axis Solar Tracker Repository🚀
 
 This repository contains the code and documentation for a Dual-Axis Solar Tracker implemented using the PID (Proportional-Integral-Derivative) controller concept. The project aims to efficiently orient solar panels towards the sun throughout the day, maximizing energy generation.
 
