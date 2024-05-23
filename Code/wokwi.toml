@@ -1,0 +1,3 @@
+version = 1
+firmware = 'D:\College\CSE_2_Term_2\Automatic Control\Project\Dual-Axis-Solar-Tracker\Code\.pio\build\nodemcu-32s\firmware.bin'
+elf = 'D:\College\CSE_2_Term_2\Automatic Control\Project\Dual-Axis-Solar-Tracker\Code\.pio\build\nodemcu-32s\firmware.elf'

@@ -23,8 +23,8 @@
 
 /************ Network & Firebase Section ************/
 // Insert your network credentials(ssid : Name)
-#define WIFI_SSID       "Omar Hassan"
-#define WIFI_PASSWORD   "0123456789_omar"  
+#define WIFI_SSID       "Omar"
+#define WIFI_PASSWORD   "0123456789"  
 
 // Insert Firebase project API Key
 #define API_KEY       "AIzaSyBuqRJ65YOWkPKruUfNekaekYqsH174HNw"
@@ -102,37 +102,37 @@ void setup() {
     Serial.begin(115200);
 
     /********** Connecting to Wi-Fi **********/
-    // WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    // Serial.print("Connecting to Wi-Fi");
-    // while (WiFi.status() != WL_CONNECTED){
-    //     Serial.print(".");
-    //     delay(300);
-    // }
-    // Serial.println();
-    // Serial.print("Connected with IP: ");
-    // Serial.println(WiFi.localIP());
-    // Serial.println();
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    Serial.print("Connecting to Wi-Fi");
+    while (WiFi.status() != WL_CONNECTED){
+        Serial.print(".");
+        delay(300);
+    }
+    Serial.println();
+    Serial.print("Connected with IP: ");
+    Serial.println(WiFi.localIP());
+    Serial.println();
 
     /********** Connecting to Firebase **********/
     // Assign the api key (required)
-    // config.api_key = API_KEY;
-    // // Assign the RTDB URL (required)
-    // config.database_url = DATABASE_URL;
+    config.api_key = API_KEY;
+    // Assign the RTDB URL (required)
+    config.database_url = DATABASE_URL;
 
-    // // Signup for an anonymous user 
-    // if (Firebase.signUp(&config, &auth, "", "")){
-    //     Serial.println("Signup To Firebase ");
-    //     signupOK = true;
-    // }
-    // else{
-    //     Serial.printf("%s\n", config.signer.signupError.message.c_str());
-    // }
+    // Signup for an anonymous user 
+    if (Firebase.signUp(&config, &auth, "", "")){
+        Serial.println("Signup To Firebase ");
+        signupOK = true;
+    }
+    else{
+        Serial.printf("%s\n", config.signer.signupError.message.c_str());
+    }
 
-    // // Assign the callback function for the long running token generation task 
-    // config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+    // Assign the callback function for the long running token generation task 
+    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
     
-    // Firebase.begin(&config, &auth);
-    // Firebase.reconnectWiFi(true);
+    Firebase.begin(&config, &auth);
+    Firebase.reconnectWiFi(true);
 
     /********** Setup Servo Motors **********/
     ServoHorizontal.attach(SERVO_HORIZONTAL);
@@ -156,36 +156,35 @@ void setup() {
 
 /*************** Start Application Section ***************/
 void loop() {
-    automaticMode();
-    // if ((Firebase.ready()) && (signupOK) && ((millis() - sendDataPrevMillis > 1500) || (sendDataPrevMillis == 0))) 
-    // {
-    //     sendDataPrevMillis = millis();
+    if ((Firebase.ready()) && (signupOK) && ((millis() - sendDataPrevMillis > 1500) || (sendDataPrevMillis == 0))) 
+    {
+        sendDataPrevMillis = millis();
         
-    //     if (Firebase.RTDB.getBool(&firebaseData, "/ESP/Mode")) 
-    //     {
-    //         if (firebaseData.boolData() == false) 
-    //         {
-    //             Serial.println("Mode : Manual mode");
-    //             manualMode();
-    //         }
-    //         else 
-    //         {
-    //             Serial.println("Mode : Automatic mode");
-    //             automaticMode();
-    //         }
-    //     }
+        // if (Firebase.RTDB.getBool(&firebaseData, "/ESP/Mode")) 
+        // {
+        //     if (firebaseData.boolData() == false) 
+        //     {
+        //         Serial.println("Mode : Manual mode");
+        //         manualMode();
+        //     }
+        //     else 
+        //     {
+        //         Serial.println("Mode : Automatic mode");
+        //         automaticMode();
+        //     }
+        // }
 
-    //     if (Firebase.RTDB.setInt(&firebaseData, "/ESP/CellVoltage", CellVoltage)) 
-    //     {
-    //     }else {Serial.println(firebaseData.errorReason());}
+        if (Firebase.RTDB.setInt(&firebaseData, "/ESP/CellVoltage", CellVoltage)) 
+        {
+        }else {Serial.println(firebaseData.errorReason());}
 
-    //     if (Firebase.RTDB.setInt(&firebaseData, "/ESP/CellCurrent", CellCurrent)) 
-    //     {
-    //     }else {Serial.println(firebaseData.errorReason());}
-    // }
-    // // Power of Cell = 1.5 W (V * I)
-    // CellVoltage = random(100, 481) / (100.0);
-    // CellCurrent = (random(10, 15) / 10.0) / (CellVoltage);
+        if (Firebase.RTDB.setInt(&firebaseData, "/ESP/CellCurrent", CellCurrent)) 
+        {
+        }else {Serial.println(firebaseData.errorReason());}
+    }
+    // Power of Cell = 1.5 W (V * I)
+    CellVoltage = random(100, 481) / (100.0);
+    CellCurrent = (random(10, 15) / 10.0) / (CellVoltage);
 }
 /*********************************************************/
 
