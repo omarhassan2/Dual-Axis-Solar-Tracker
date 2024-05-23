@@ -160,19 +160,19 @@ void loop() {
     {
         sendDataPrevMillis = millis();
         
-        // if (Firebase.RTDB.getBool(&firebaseData, "/ESP/Mode")) 
-        // {
-        //     if (firebaseData.boolData() == false) 
-        //     {
-        //         Serial.println("Mode : Manual mode");
-        //         manualMode();
-        //     }
-        //     else 
-        //     {
-        //         Serial.println("Mode : Automatic mode");
-        //         automaticMode();
-        //     }
-        // }
+        if (Firebase.RTDB.getBool(&firebaseData, "/ESP/Mode")) 
+        {
+            if (firebaseData.boolData() == false) 
+            {
+                Serial.println("Mode : Manual mode");
+                manualMode();
+            }
+            else 
+            {
+                Serial.println("Mode : Automatic mode");
+                automaticMode();
+            }
+        }
 
         if (Firebase.RTDB.setInt(&firebaseData, "/ESP/CellVoltage", CellVoltage)) 
         {
