@@ -28,7 +28,8 @@ The circuit diagram for the Dual-Axis Solar Tracker can be found in the `Schemat
 
 The PID Controller is a crucial part of our solar tracker system. It ensures precise control over the movement of the solar panels. The Simulink module used to obtain the PID constants (Kp, Ki, Kd).
 
-- Simulink Model: 
+- Simulink Model:
+  
 ![Simulink Model](/Simulink%20Model/Simulink_Model.png)
 
 
